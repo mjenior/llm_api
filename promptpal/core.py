@@ -165,7 +165,7 @@ class CreateAgent:
         if self.model not in total_tokens.keys():
             total_tokens[self.model] = {"prompt": 0, "completion": 0}
         
-        # Validdate specific hyperparams
+        # Validate specific hyperparams
         self.stage = self.stage if self.stage == 'refine_only' else 'normal'
         self.seed = self.seed if isinstance(self.seed, int) else self._string_to_binary(self.seed)
         self.temperature, self.top_p = self._validate_probability_params(self.temperature, self.top_p)
@@ -274,6 +274,7 @@ class CreateAgent:
                 "\nAgent using gpt-4o-mini to optimize initial user request...\n", True, self.logging)
             self.prompt = self._refine_user_prompt(self.prompt)
 
+    # OpenAI specific
     def _validate_model_selection(self, input_model):
         """Validates and selects the model based on user input or defaults."""
         openai_models = ["gpt-4o","o1","o1-mini","o1-preview","dall-e-3","dall-e-2"]
@@ -305,6 +306,7 @@ class CreateAgent:
         with open(filename, "r", encoding="utf-8") as f:
             return f"# File: {filename}\n{f.read()}"
 
+    # OpenAI specific
     def _refine_custom_role(self, init_role):
         """Reformat input custom user roles for improved outcomes."""
 
@@ -365,7 +367,7 @@ Agent parameters:
     Time stamp: {self.timestamp}
     Seed: {self.seed}
     Assistant ID: {self.agent}
-    Thread ID: {thread.id}
+    Thread ID: {self.thread_id}
     Requests in current thread: {thread.current_thread_calls}
     """
         self._log_and_print(statusStr, True, self.logging)
@@ -427,6 +429,7 @@ Agent parameters:
             summary = self.summarize_current_thread()
             self.start_new_thread("The following is a summary of a ongoing conversation with a user and an AI assistant:\n" + summary)
 
+    # OpenAI specific
     def _init_chat_completion(self, prompt, model='gpt-4o-mini', role='user', iters=1, seed=42, temp=0.7, top_p=1.0):
         """Initialize and submit a single chat completion request"""
         message = [{"role": "user", "content": prompt}, {"role": "system", "content": role}]
@@ -546,6 +549,7 @@ Agent parameters:
         )
         self._log_and_print(self.last_message, True, self.logging)
 
+    #OpenAI specific
     def _update_token_count(self, response_obj):
         """Updates token count for prompt and completion."""
         global total_tokens
@@ -569,7 +573,7 @@ Agent parameters:
 """
         self._log_and_print(tokenStr, True, self.logging)
 
-
+    # OpenAI specific
     def thread_report(self):
         """Report active threads from current session"""
         threadStr = f"""Current session threads:
@@ -577,6 +581,7 @@ Agent parameters:
 """
         self._log_and_print(threadStr, True, self.logging)
 
+    # OpenAI specific
     def _calculate_cost(self, dec=5):
         """Calculates approximate cost (USD) of LLM tokens generated to a given decimal place"""
         global total_cost
@@ -613,6 +618,7 @@ Agent parameters:
 """     
         self._log_and_print(costStr, True, self.logging)
 
+    # OpenAI specific
     def _condense_iterations(self, api_response):
         """Condenses multiple API responses into a single coherent response."""
         api_responses = [r.message.content.strip() for r in api_response.choices]
@@ -646,6 +652,7 @@ Agent parameters:
 
         return outStr
 
+    # OpenAI specific
     def _refine_user_prompt(self, old_prompt):
         """Refines an LLM prompt using specified rewrite actions."""
         updated_prompt = old_prompt
@@ -809,6 +816,7 @@ Agent parameters:
 
         return max(line_counts, key=line_counts.get)
 
+    # OpenAI specific
     def _create_new_agent(self, interpreter=False):
         """
         Creates a new assistant based on user-defined parameters
@@ -829,6 +837,7 @@ Agent parameters:
         except Exception as e:
             raise RuntimeError(f"Failed to create assistant: {e}")
 
+    # OpenAI specific
     def _run_thread_request(self) -> str:
         """
         Sends a user prompt to an existing thread, runs the assistant, 
