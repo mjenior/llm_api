@@ -188,6 +188,11 @@ patternDict = {
       "class": re.compile(r'class\s+(\w+)\s*[{]'),
       "variable": re.compile(r'def\s+(\w+)\s*='),
    },
+   "nextflow": {
+      "function": re.compile(r'process\s+(\w+)\s*\('),
+      "class": re.compile(r'workflow\s+(\w+)\s*\('),
+      "variable": re.compile(r'def\s+(\w+)\s*\('),
+   },
 }
 
 # Text library for easy import
