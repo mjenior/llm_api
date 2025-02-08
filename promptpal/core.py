@@ -234,6 +234,7 @@ class CreateAgent:
         """
         self.log_text = []
         self.log_file = f"logs/{self.prefix}.transcript.log"
+        self.log_file = self._check_unique_filename(self.log_file)
         os.makedirs("logs", exist_ok=True)
         with open(self.log_file, "w") as f:
             f.write("New session initiated.\n")
@@ -319,10 +320,13 @@ class CreateAgent:
         response = self._init_chat_completion(refine_prompt)
         role_name = response.choices[0].message.content.strip()
 
-        reportStr = f"""Role name: {role_name}
-Description: {custom_role}
+        reportStr = f"""Role name:
+{role_name}
 
-        """
+Description:
+{custom_role}
+
+"""
         self._log_and_print(reportStr, self.verbose, self.logging)
 
         return role_name, custom_role
@@ -456,6 +460,19 @@ Agent parameters:
 
         return "\n\n".join(conversation)
 
+    @staticmethod
+    def _check_unique_filename(filename):
+        # Split the filename into name and extension
+        name, ext = os.path.splitext(filename)
+        counter = 1
+        
+        # Check if the file exists, and modify the name if it does
+        while os.path.exists(filename):
+            filename = f"{name}_{counter}{ext}"
+            counter += 1
+        
+        return filename
+
     def _handle_text_request(self):
         """Processes text-based responses from OpenAIs chat models."""
         self.last_message = self._run_thread_request()
@@ -472,6 +489,7 @@ Agent parameters:
                 code = code_snippets[lang]
                 objects = self._extract_object_names(code, lang)
                 file_name = f"{self._find_max_lines(code, objects)}.{self.timestamp}{extDict.get(lang, f'.{lang}')}".lstrip("_.")
+                file_name = self._check_unique_filename(file_name)
                 reportStr += f"\t{file_name}\n"
                 self._write_script(code, file_name)
 
@@ -516,6 +534,7 @@ Agent parameters:
         )
         image_data = requests.get(response.data[0].url).content
         image_file = f"images/{self.prefix}.image.png"
+        image_file = self._check_unique_filename(image_file)
         with open(image_file, "wb") as outFile:
             outFile.write(image_data)
 
