@@ -81,7 +81,7 @@ class ChatGPT(CreateAgent):
         self.thread_id = thread.id
 
         # Report
-        self._log_and_print(f"New thread created and added to current agent: {self.thread_id}\n", 
+        self.self._log_and_print(f"New thread created and added to current agent: {self.thread_id}\n", 
             self.verbose, self.logging)
 
     def _init_chat_completion(self, prompt, model, role='user'):
@@ -110,9 +110,7 @@ class ChatGPT(CreateAgent):
         threadStr = f"""Current session threads:
     {'\n\t'.join(client.chat_ids)}
 """
-        self._log_and_print(threadStr, True, self.logging)
-
-
+        self.self._log_and_print(threadStr, True, self.logging)
 
     def _create_new_agent(self, interpreter=False):
         """
@@ -134,7 +132,6 @@ class ChatGPT(CreateAgent):
         except Exception as e:
             raise RuntimeError(f"Failed to create assistant: {e}")
 
-
     def _get_current_messages(self):
         """Fetches all messages from a thread in order and returns them as a text block."""
         messages = client.beta.threads.messages.list(chat_id=self.chat_id)
@@ -143,8 +140,7 @@ class ChatGPT(CreateAgent):
 
         return "\n\n".join(conversation)
 
-
-    def _run_thread_request(self) -> str:
+    def _send_chat_message(self) -> str:
         """
         Sends a user prompt to an existing thread, runs the assistant, 
         and retrieves the response if successful.
@@ -184,12 +180,6 @@ class ChatGPT(CreateAgent):
         else:
             raise ValueError("Assistant failed to generate a response.")
 
-
-
-
-    # Do not have Gemini equivalents yet for the following:
-
-    # OpenAI specific
     def _handle_image_request(self):
         """Processes image generation requests using OpenAIs image models."""
         os.makedirs("images", exist_ok=True)
@@ -202,7 +192,7 @@ class ChatGPT(CreateAgent):
         )
         self._update_token_count(response)
         self._calculate_cost()
-        _log_and_print(
+        self._log_and_print(
             f"\nRevised initial prompt:\n{response.data[0].revised_prompt}",
             self.verbose,
             self.logging,
@@ -219,10 +209,8 @@ class ChatGPT(CreateAgent):
             + "\nGenerated image saved to:\n"
             + image_file
         )
-        _log_and_print(self.last_message, True, self.logging)
+        self._log_and_print(self.last_message, True, self.logging)
 
-
-    # OpenAI specific
     def _validate_image_params(self, dimensions, quality):
         """Validates image dimensions and quality for the model."""
         valid_dimensions = {"dall-e-3": ["1024x1024", "1792x1024", "1024x1792"],
@@ -234,4 +222,3 @@ class ChatGPT(CreateAgent):
 
         self.quality = "hd" if quality.lower() in {"h", "hd", "high", "higher", "highest"} else "standard"
         self.quality = "hd" if self.label == "photographer" else self.quality # Check for photo role
-

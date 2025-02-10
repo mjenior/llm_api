@@ -216,7 +216,6 @@ class CreateAgent:
             if expected_type == int and value <= 0:
                 raise ValueError(f"{attr_name} must be a positive integer, got {value}")
 
-
     def _setup_logging(self):
         """
         Prepare logging setup.
@@ -226,7 +225,6 @@ class CreateAgent:
         os.makedirs("logs", exist_ok=True)
         with open(self.log_file, "w") as f:
             f.write("New session initiated.\n")
-
 
     def _prepare_query_text(self, prompt_text):
         """
@@ -247,11 +245,9 @@ class CreateAgent:
         if self.refine_prompt or self.glyph_prompt:
             self.prompt = self._refine_user_prompt(self.prompt)
 
-
     def _validate_model_selection(self, input_model, valid_models):
         """Validates and selects the model based on user input or defaults."""
         self.model = input_model.lower() if input_model.lower() in valid_models else valid_models[0]
-
 
     def _prepare_system_role(self, input_role):
         """Prepares system role text."""
@@ -274,7 +270,6 @@ class CreateAgent:
         if self.chain_of_thought:
             self.role += modifierDict["cot"]
 
-
     def _refine_custom_role(self, init_role):
         """Reformat input custom user roles for improved outcomes."""
         self._log_and_print(f"Refining custom role text...\n", self.verbose, self.logging)
@@ -287,18 +282,13 @@ class CreateAgent:
         refine_prompt = "Generate a short and accurate name for the following system role prompt:\n\n" + custom_role "\n\nReturn only the generated name."
         role_name = self._init_chat_completion(refine_prompt)
 
-        reportStr = f"""Role name:
-{role_name}
+        reportStr = f"""Role name: {role_name}\n"""
+        reportStr += f"""\nDescription:\n{custom_role}\n"""
 
-Description:
-{custom_role}
-
-"""
         self._log_and_print(reportStr, self.verbose, self.logging)
 
         return role_name, custom_role
 
-        
     def status(self):
         """Generate status message."""
         statusStr = f"""
@@ -323,7 +313,7 @@ Agent parameters:
     Assistant ID: {self.agent_id}
     Active chat ID: {self.chat_id}
     Requests in current thread: {thread.current_chat_messages}
-    """
+"""
         self._log_and_print(statusStr, True, self.logging)
 
         # Token usage report
@@ -332,7 +322,6 @@ Agent parameters:
         self.cost_report()
         # Thread report
         self.chat_report()
-
 
     def chat(self, prompt=''):
         """Submits the query to OpenAIs API and processes the response."""

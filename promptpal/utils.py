@@ -1,15 +1,12 @@
-
 import os
 import re
 import sys
-
 
 def string_to_binary(input_string):
     """Create a binary-like variable from a string for use a random seed"""
     # Convert all characters in a str to ASCII values and then to 8-bit binary
     binary = ''.join([format(ord(char), "08b") for char in input_string])
-    # Constrain length
-    return int(binary[0 : len(str(sys.maxsize))])
+    return int(binary[0 : len(str(sys.maxsize))]) # Constrain length
 
 def _is_code_file(file_path):
     """Check if a file has a code extension."""
@@ -19,7 +16,6 @@ def check_unique_filename(filename):
     # Split the filename into name and extension
     name, ext = os.path.splitext(filename)
     counter = 1
-    
     # Check if the file exists, and modify the name if it does
     while os.path.exists(filename):
         filename = f"{name}_{counter}{ext}"
@@ -78,16 +74,8 @@ def find_max_lines(code, object_names):
 
 def validate_probability_params(temp, topp):
     """Ensure temperature and top_p are valid"""
-    # Acceptable ranges
-    if temp < 0.0 or temp > 2.0:
-        temp = 0.7
-    if topp < 0.0 or topp > 2.0:
-        topp = 1.0
-
-    # Only one variable is changed at a time
-    if temp != 0.7 and topp != 1.0:
-        topp = 1.0
-
+    temp = 0.7 if not (0.0 <= temp <= 2.0) else temp
+    topp = 1.0 if not (0.0 <= topp <= 2.0) or temp != 0.7 else topp
     return temp, topp
 
 def read_file_contents(filename):
@@ -103,15 +91,12 @@ def scan_directory(path="code"):
             file_path = os.path.join(root, file)
             if _is_code_file(file_path):
                 codebase += f"File: {file_path}\n"
-                codebase += read_file_contents(file_path)
-                codebase += "\n\n"
+                codebase += read_file_contents(file_path) + "\n\n"
 
     return codebase
 
 def find_existing_paths(prompt):
-    """
-    Scan the input string for existing paths and return them in separate lists.
-    """
+    """Scan the input string for existing paths and return them in separate lists."""
     # Regular expression to match potential file paths
     path_pattern = re.compile(r'([a-zA-Z]:\\[^:<>"|?\n]*|/[^:<>"|?\n]*)')
 
@@ -127,20 +112,12 @@ def find_existing_paths(prompt):
     return existing_paths
 
 def find_existing_files(prompt):
-    # Filter filenames by checking if they exist in the current directory or system's PATH
-    existing_files = [
-        x
-        for x in prompt.split()
-        if os.path.isfile(x.rstrip(string.punctuation))
-    ]
-
+    """Filter filenames by checking if they exist in the current directory or system's PATH"""
+    existing_files = [x for x in prompt.split() if os.path.isfile(x.rstrip(string.punctuation))]
     return existing_files
 
 def extract_code_snippets(message):
-    """
-    Extract code snippets from a large body of text using triple backticks as delimiters.
-    Also saves the language tag at the start of each snippet.
-    """
+    """Extract code snippets from a large body of text using triple backticks as delimiters."""
     # Regular expression to match code blocks enclosed in triple backticks, including the language tag
     code_snippets = defaultdict(str)
     code_pattern = re.compile(r"```(\w+)\n(.*?)```", re.DOTALL)

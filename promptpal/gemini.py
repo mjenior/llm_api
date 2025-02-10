@@ -3,7 +3,6 @@ from propmptpal.core import CreateAgent
 from google import genai
 from google.genai import types
 
-
 # Confirm environment API key
 api_key = os.getenv("GEMINI_API_KEY")
 if api_key is None:
@@ -36,13 +35,11 @@ class Gemini(CreateAgent):
         google_models = ["gemini-2.0-flash", 
             "gemini-2.0-flash-lite", 
             "gemini-1.5-flash"]
-        # As of February 8, 2025
+        # Pricing as of February 8, 2025
         google_rates = {
            "gemini-2.0-flash": (0.1, 0.4),
            "gemini-2.0-flash-lite": (0.075, 0.3),
-           "gemini-1.5-flash": (0.075, 0.3),
-        }
-
+           "gemini-1.5-flash": (0.075, 0.3)}
 
         # Initialize the base class with all parameters
         super().__init__(model=model, valid_models=google_models, **kwargs)
@@ -96,14 +93,12 @@ class Gemini(CreateAgent):
         client.chat_ids |= set([chat.id])
         self.chat_id = chat.id
 
-        # Report
         self._log_and_print(f"New chat created and added to current agent: {self.chat_id}\n", 
             self.verbose, self.logging)
 
     def _update_token_count(self, response_obj):
         """Updates token count for prompt and completion."""
         usage = response_obj.usage_metadata
-
         global total_tokens
         total_tokens[self.model]["prompt"] += usage['prompt_token_count']
         total_tokens[self.model]["completion"] += usage['candidates_token_count']
@@ -111,22 +106,13 @@ class Gemini(CreateAgent):
         self.tokens["prompt"] += usage['prompt_token_count']
         self.tokens["completion"] += usage['candidates_token_count']
 
-
-
-
-
-    # Update for google
     def _get_current_messages(self):
         """Fetches all messages from a thread in order and returns them as a text block."""
-
-        messages = client.beta.threads.messages.list(chat_id=self.chat_id)
-        sorted_messages = sorted(messages.data, key=lambda msg: msg.created_at)
-
-
         conversation = []
+        speaker = "User:"
         for entry in self.chat_history:
-
-            conversation.append()
+            conversation.append(f"{speaker}\n{entry}")
+            speaker = "System:" if speaker == "User:" else "User:"
 
         return "\n\n".join(conversation)
 
@@ -161,3 +147,69 @@ class Gemini(CreateAgent):
         		tools=[types.Tool(google_search=types.GoogleSearchRetrieval(
 	        		dynamic_retrieval_config=types.DynamicRetrievalConfig(
 	        			dynamic_threshold=self.threshold)))])
+
+
+    # Still needs refactoring
+    def _handle_image_request(self):
+        """Processes image generation requests using OpenAIs image models."""
+        os.makedirs("images", exist_ok=True)
+
+        response = model.generate_image(
+            prompt=self.prompt,
+            dimensions=self.dimensions,
+            quality=self.quality,
+        )
+
+
+        response = client.images.generate(
+            model=self.model,
+            prompt=self.prompt,
+            n=1,
+            size=self.dimensions,
+            quality=self.quality,
+        )
+        self._update_token_count(response)
+        self._calculate_cost()
+        _log_and_print(
+            f"\nRevised initial prompt:\n{response.data[0].revised_prompt}",
+            self.verbose,
+            self.logging,
+        )
+        image_data = requests.get(response.data[0].url).content
+        image_file = f"images/{self.prefix}.image.png"
+        image_file = _check_unique_filename(image_file)
+        with open(image_file, "wb") as outFile:
+            outFile.write(image_data)
+
+        self.last_message = (
+            "\nRevised image prompt:\n"
+            + response.data[0].revised_prompt
+            + "\nGenerated image saved to:\n"
+            + image_file
+        )
+        _log_and_print(self.last_message, True, self.logging)
+
+
+
+    def _validate_image_params(self, dimensions, quality):
+        """Validates image dimensions and quality for the Gemini model."""
+        # Valid dimensions for Gemini (hypothetical example)
+        valid_dimensions = {
+            "gemini-pro": ["1024x1024", "768x768", "512x512"],  # Example dimensions
+            "gemini-ultra": ["2048x2048", "1024x1024", "512x512"]  # Example dimensions
+        }
+
+        # Validate dimensions
+        if self.model in valid_dimensions and dimensions.lower() not in valid_dimensions[self.model]:
+            self.dimensions = "1024x1024"  # Default dimension
+        else:
+            self.dimensions = dimensions
+
+        # Validate quality
+        self.quality = "high" if quality.lower() in {"h", "hd", "high", "higher", "highest"} else "standard"
+        
+        # Override quality for specific roles (e.g., photographer)
+        if self.label == "photographer":
+            self.quality = "high"
+
+        return self.dimensions, self.quality
