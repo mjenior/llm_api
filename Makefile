@@ -6,5 +6,9 @@ bump:
 build:
 	python3 -m build
 
-deploy: build
+clean:
+	rm -rf promptpal.egg*
+
+deploy: build clean
 	python3 -m twine upload --repository pypi dist/*
+
