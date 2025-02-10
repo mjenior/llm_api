@@ -2,10 +2,26 @@ import os
 import re
 import sys
 
+from promptpal.lib import text_library
+patternDict = text_library["patterns"]
+
+
+def setup_logging(prefix):
+    """
+    Prepare logging setup.
+    """
+    log_file = utils.check_unique_filename(f"logs/{prefix}.transcript.log")
+    os.makedirs("logs", exist_ok=True)
+    with open(log_file, "w") as f:
+        f.write("New session initiated.\n")
+        
+    return log_file
+
 def string_to_binary(input_string):
     """Create a binary-like variable from a string for use a random seed"""
     # Convert all characters in a str to ASCII values and then to 8-bit binary
     binary = ''.join([format(ord(char), "08b") for char in input_string])
+
     return int(binary[0 : len(str(sys.maxsize))]) # Constrain length
 
 def _is_code_file(file_path):

@@ -1,4 +1,3 @@
-
 import os
 import re
 import sys
@@ -10,12 +9,6 @@ from collections import defaultdict
 
 from promptpal import utils
 from promptpal.lib import text_library
-
-roleDict = text_library["roles"]
-modifierDict = text_library["modifiers"]
-refineDict = text_library["refinement"]
-extDict = text_library["extensions"]
-patternDict = text_library["patterns"]
 
 total_cost = 0.0
 total_tokens = {}
@@ -52,7 +45,7 @@ class CreateAgent:
         glyph (bool): If True, restructures queries with representative/associative glyphs and logic flow
         temperature (float): Range from 0.0 to 2.0, lower values increase randomness, and higher values increase randomness.
         top_p (float): Range from 0.0 to 2.0, lower values increase determinism, and higher values increase determinism.
-        message_limit (int): Maximum number of messages to a single thread before summarizing content and passing to new instance
+        message_limit (int): Maximum number of messages to a single chat before summarizing content and passing to new instance
         last_message (str): Last returned system message
 
     Current role shortcuts:
@@ -74,10 +67,9 @@ class CreateAgent:
         status: Reports current attributes and status of agent and session information 
         cost_report: Reports spending information
         token_report: Reports token generation information
-        chat_report: Report active threads from current session
-        start_new_chat: Start a new thread with only the current agent.
+        chat_report: Report active chats from current session
+        start_new_chat: Start a new chat with only the current agent.
         summarize_current_chat: Summarize current conversation history for future context parsing.
-        _setup_logging: Prepares logging setup.
         _prepare_query_text: Prepares the query, including prompt modifications and image handling.
         _validate_model_selection: Validates and selects the model based on user input or defaults.
         _prepare_system_role: Selects the role based on user input or defaults.
@@ -101,7 +93,6 @@ class CreateAgent:
         save_code = False,
         scan_dirs = False,
         new_chat = False,
-        model = "gpt-4o-mini",
         role = "assistant",
         seed = "t634e``R75T86979UYIUHGVCXZ",
         iterations = 1,
@@ -124,7 +115,6 @@ class CreateAgent:
         self.save_code = save_code
         self.scan_dirs = scan_dirs
         self.new_chat = new_chat
-        self.model = model
         self.role = role
         self.seed = seed
         self.iterations = iterations
@@ -138,10 +128,10 @@ class CreateAgent:
         # Check user input types
         self._validate_types()
 
-        # Agent-specific thread params
-        global thread
-        self.chat_id = thread.id
-        thread.message_limit = message_limit
+        # Agent-specific chat params
+        global chat
+        self.chat_id = chat.id
+        chat.message_limit = message_limit
         if self.new_chat == True:
             self.start_new_chat()
 
@@ -167,9 +157,9 @@ class CreateAgent:
         # Initialize reporting and related vars
         self.timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.prefix = f"{self.label}.{self.model.replace('-', '_')}.{self.timestamp}"        
-        if self.logging: self._setup_logging()
+        if self.logging: 
+            self.log_file = utils.setup_logging(self.prefix)
         self._log_and_print(self.status(), False, self.logging)
-
 
     def _validate_types(self):
         """
@@ -216,16 +206,6 @@ class CreateAgent:
             if expected_type == int and value <= 0:
                 raise ValueError(f"{attr_name} must be a positive integer, got {value}")
 
-    def _setup_logging(self):
-        """
-        Prepare logging setup.
-        """
-        self.log_text = []
-        self.log_file = utils.check_unique_filename(f"logs/{self.prefix}.transcript.log")
-        os.makedirs("logs", exist_ok=True)
-        with open(self.log_file, "w") as f:
-            f.write("New session initiated.\n")
-
     def _prepare_query_text(self, prompt_text):
         """
         Prepares the query, including prompt modifications and image handling.
@@ -251,7 +231,7 @@ class CreateAgent:
 
     def _prepare_system_role(self, input_role):
         """Prepares system role text."""
-
+        roleDict = text_library["roles"]
         # Selects the role based on user input or defaults.
         if input_role.lower() in roleDict:
             self.label = input_role.lower()
@@ -268,7 +248,7 @@ class CreateAgent:
 
         # Add chain of thought reporting
         if self.chain_of_thought:
-            self.role += modifierDict["cot"]
+            self.role += text_library["modifiers"]["cot"]
 
     def _refine_custom_role(self, init_role):
         """Reformat input custom user roles for improved outcomes."""
@@ -312,7 +292,7 @@ Agent parameters:
     Seed: {self.seed}
     Assistant ID: {self.agent_id}
     Active chat ID: {self.chat_id}
-    Requests in current thread: {thread.current_chat_messages}
+    Requests in current chat: {chat.current_chat_messages}
 """
         self._log_and_print(statusStr, True, self.logging)
 
@@ -320,7 +300,7 @@ Agent parameters:
         self.token_report()
         # $$$ report
         self.cost_report()
-        # Thread report
+        # Chat report
         self.chat_report()
 
     def chat(self, prompt=''):
@@ -330,24 +310,24 @@ Agent parameters:
             try:
                 prompt = self.last_message
             except Exception as e:
-                raise ValueError(f"No existing messages found in thread: {e}")
+                raise ValueError(f"No existing messages found in chat: {e}")
 
         # Update user prompt 
         self._prepare_query_text(prompt)
         self._log_and_print(
-            f"\n{self.role_name} using {self.model} to process updated conversation thread...\n",
+            f"\n{self.role_name} using {self.model} to process continued conversation...\n",
                 True, self.logging)
 
         if self.stage != "refine_only":
             if "dall-e" not in self.model:
-                thread.current_chat_messages += 1
+                chat.current_chat_messages += 1
                 self._handle_text_request()
             else:
                 self._handle_image_request()
 
-        # Check current scope thread
-        if thread.current_chat_messages >= thread.message_limit:
-            self._log_and_print(f"\nReached end of current thread limit.\n", self.verbose, False)
+        # Check current scope chat
+        if chat.current_chat_messages >= chat.message_limit:
+            self._log_and_print(f"\nReached end of current chat limit.\n", self.verbose, False)
             summary = self.summarize_current_chat()
             self.start_new_chat("The following is a summary of a ongoing conversation with a user and an AI assistant:\n" + summary)
 
@@ -362,20 +342,20 @@ Agent parameters:
 
     def summarize_current_chat(self):
         """Summarize current conversation history for future context parsing."""
-        self._log_and_print(f"Using {self.small_model} to summarize current thread...\n", self.verbose, False)
+        self._log_and_print(f"Using {self.small_model} to summarize current chat...\n", self.verbose, False)
 
-        # Get all thread messages
+        # Get all chat messages
         all_messages = self._get_current_messages()
 
         # Generate concise summary
-        summary_prompt = modifierDict['summarize'] + "\n\n" + all_messages
+        summary_prompt = text_library["modifiers"]['summarize'] + "\n\n" + all_messages
         summarized = self._init_chat_completion(model=self.small_model, prompt=summary_prompt, iters=self.iterations, seed=self.seed)
 
         return summarized
 
     def _handle_text_request(self):
         """Processes text-based responses from OpenAIs chat models."""
-        self.last_message = self._run_thread_request()
+        self.last_message = self._send_chat_message()
         self._update_token_count(self.run_status)
         self._calculate_cost()
         self._log_and_print(self.last_message, True, self.logging)
@@ -388,7 +368,7 @@ Agent parameters:
             for lang in code_snippets.keys():
                 code = code_snippets[lang]
                 objects = utils.extract_object_names(code, lang)
-                file_name = f"{utils.find_max_lines(code, objects)}.{self.timestamp}{extDict.get(lang, f'.{lang}')}".lstrip("_.")
+                file_name = f"{utils.find_max_lines(code, objects)}.{self.timestamp}{text_library["extensions"].get(lang, f'.{lang}')}".lstrip("_.")
                 file_name = _check_unique_filename(file_name)
                 reportStr += f"\t{file_name}\n"
                 self._write_script(code, file_name)
@@ -439,7 +419,6 @@ Agent parameters:
 
     def cost_report(self, dec=5):
         """Generates session cost report."""
-        
         costStr = f"""Overall session cost: ${round(total_cost, dec)}
 
     Current agent using: {self.model}
@@ -459,7 +438,7 @@ Agent parameters:
             f"Using {self.small_model} to condense system responses...\n", self.verbose, self.logging
         )
         condensed = self._init_chat_completion( 
-            model=self.small_model, prompt= modifierDict['condense'] + "\n\n" + responses)
+            model=self.small_model, prompt=text_library["modifiers"]['condense'] + "\n\n" + responses)
 
         self._log_and_print(
             f"Condensed text:\n{condensed}\n", self.verbose, self.logging)
@@ -468,6 +447,8 @@ Agent parameters:
 
     def _refine_user_prompt(self, old_prompt):
         """Refines an LLM prompt using specified rewrite actions."""
+        modifierDict = text_library["modifiers"]
+        refineDict = text_library["refinement"]
         self._log_and_print(
                 f"Using {self.small_model} to optimize initial user request...\n", 
                 True, self.logging)
@@ -488,10 +469,7 @@ Agent parameters:
         refined = self._init_chat_completion(
             model=self.small_model, prompt=updated_prompt)
 
-        if self.iterations > 1:
-            new_prompt = self._condense_iterations(refined)
-        else:
-            new_prompt = refined
+        new_prompt = self._condense_iterations(refined) if self.iterations > 1 else refined
 
         self._log_and_print(
             f"Refined query prompt:\n{new_prompt}", self.verbose, self.logging)

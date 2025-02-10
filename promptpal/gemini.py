@@ -1,4 +1,3 @@
-
 from propmptpal.core import CreateAgent
 from google import genai
 from google.genai import types
@@ -66,7 +65,6 @@ class Gemini(CreateAgent):
 
     def _init_chat_completion(self, prompt, model):
         """Initialize and submit a single chat completion request"""
-
     	cfg = types.GenerateContentConfig(
             temperature=self.temperature,
     		topP=self.top_p,
@@ -74,9 +72,7 @@ class Gemini(CreateAgent):
     		candidateCount=self.iterations)
 
         prompt = [prompt] if isinstance(prompt, str) else prompt
-
         completion = client.models.generate_content(model=model, contents=prompt, config=cfg)
-		
         self._update_token_count(completion)
         self._calculate_cost(google_rates)
 
@@ -92,7 +88,6 @@ class Gemini(CreateAgent):
         global client
         client.chat_ids |= set([chat.id])
         self.chat_id = chat.id
-
         self._log_and_print(f"New chat created and added to current agent: {self.chat_id}\n", 
             self.verbose, self.logging)
 
@@ -107,7 +102,7 @@ class Gemini(CreateAgent):
         self.tokens["completion"] += usage['candidates_token_count']
 
     def _get_current_messages(self):
-        """Fetches all messages from a thread in order and returns them as a text block."""
+        """Fetches all messages from a chat in order and returns them as a text block."""
         conversation = []
         speaker = "User:"
         for entry in self.chat_history:
@@ -116,18 +111,13 @@ class Gemini(CreateAgent):
 
         return "\n\n".join(conversation)
 
-    
-
-
     def _send_chat_message(self) -> str:
         """Sends a user prompt to an existing chat and retrieves the response."""
         self.chat_history.append({"role": "user", "content": self.prompt})
 
-        # Send user prompt to existing chat.
+        # Send user prompt to existing chat and add to the chat history
         response = chat.send_message(self.prompt, config=self.agent)
-
-        # Add the model's response to the chat history
-        chat_history.append({"role": "model", "content": response.text})
+        self.chat_history.append({"role": "model", "content": response.text})
 		
 		return response.text
 
@@ -147,6 +137,30 @@ class Gemini(CreateAgent):
         		tools=[types.Tool(google_search=types.GoogleSearchRetrieval(
 	        		dynamic_retrieval_config=types.DynamicRetrievalConfig(
 	        			dynamic_threshold=self.threshold)))])
+
+    # Requires even more testing
+    def _validate_image_params(self, dimensions, quality):
+        """Validates image dimensions and quality for the Gemini model."""
+        valid_dimensions = {
+            "gemini-pro": ["1024x1024", "768x768", "512x512"],  # Example dimensions
+            "gemini-ultra": ["2048x2048", "1024x1024", "512x512"]  # Example dimensions
+        }
+
+        # Validate dimensions
+        if self.model in valid_dimensions and dimensions.lower() not in valid_dimensions[self.model]:
+            self.dimensions = "1024x1024"  # Default dimension
+        else:
+            self.dimensions = dimensions
+
+        # Validate quality
+        self.quality = "high" if quality.lower() in {"h", "hd", "high", "higher", "highest"} else "standard"
+        
+        # Override quality for specific roles (e.g., photographer)
+        if self.label == "photographer":
+            self.quality = "high"
+
+        return self.dimensions, self.quality
+
 
 
     # Still needs refactoring
@@ -170,7 +184,7 @@ class Gemini(CreateAgent):
         )
         self._update_token_count(response)
         self._calculate_cost()
-        _log_and_print(
+        self._log_and_print(
             f"\nRevised initial prompt:\n{response.data[0].revised_prompt}",
             self.verbose,
             self.logging,
@@ -187,29 +201,4 @@ class Gemini(CreateAgent):
             + "\nGenerated image saved to:\n"
             + image_file
         )
-        _log_and_print(self.last_message, True, self.logging)
-
-
-
-    def _validate_image_params(self, dimensions, quality):
-        """Validates image dimensions and quality for the Gemini model."""
-        # Valid dimensions for Gemini (hypothetical example)
-        valid_dimensions = {
-            "gemini-pro": ["1024x1024", "768x768", "512x512"],  # Example dimensions
-            "gemini-ultra": ["2048x2048", "1024x1024", "512x512"]  # Example dimensions
-        }
-
-        # Validate dimensions
-        if self.model in valid_dimensions and dimensions.lower() not in valid_dimensions[self.model]:
-            self.dimensions = "1024x1024"  # Default dimension
-        else:
-            self.dimensions = dimensions
-
-        # Validate quality
-        self.quality = "high" if quality.lower() in {"h", "hd", "high", "higher", "highest"} else "standard"
-        
-        # Override quality for specific roles (e.g., photographer)
-        if self.label == "photographer":
-            self.quality = "high"
-
-        return self.dimensions, self.quality
+        self._log_and_print(self.last_message, True, self.logging)

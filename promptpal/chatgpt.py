@@ -1,4 +1,3 @@
-
 from propmptpal.core import CreateAgent
 from openai import OpenAI
 
@@ -7,11 +6,11 @@ api_key = os.getenv("OPENAI_API_KEY")
 if api_key is None:
     raise EnvironmentError("OPENAI_API_KEY environment variable not found!")
 
-# Initialize OpenAI client and conversation thread
+# Initialize OpenAI client and conversation chat
 client = OpenAI(api_key=api_key)
-thread = client.beta.threads.create()
-thread.current_thread_calls = 0
-client.chat_ids = set([thread.id])
+chat = client.beta.threads.create()
+chat.current_chat_calls = 0
+client.chat_ids = set([chat.id])
 
 
 class ChatGPT(CreateAgent):
@@ -52,10 +51,10 @@ class ChatGPT(CreateAgent):
         super().__init__(model=model, valid_models=openai_models, **kwargs)
         self.small_model = 'gpt-4o-mini'
 
-    	# Agent-specific thread params
-        global thread
-        self.thread_id = thread.id
-        thread.message_limit = message_limit
+    	# Agent-specific chat params
+        global chat
+        self.chat_id = chat.id
+        chat.message_limit = message_limit
         if self.new_chat == True:
             self.start_new_chat()
 
@@ -65,23 +64,23 @@ class ChatGPT(CreateAgent):
             total_tokens[self.model] = {"prompt": 0, "completion": 0}
 
     def start_new_chat(self, context=None):
-        """Start a new thread with only the current agent and adds previous context if needed."""
-        global thread
-        thread = client.beta.threads.create()
-        thread.current_thread_calls = 0
-        thread.message_limit = self.message_limit
+        """Start a new chat with only the current agent and adds previous context if needed."""
+        global chat
+        chat = client.beta.threads.create()
+        chat.current_chat_calls = 0
+        chat.message_limit = self.message_limit
 
         # Add previous context
         if context:
             previous_context = client.beta.threads.messages.create(
-                thread_id=thread.id, role="user", content=context)
+                chat_id=chat.id, role="user", content=context)
 
         global client
-        client.chat_ids |= set([thread.id])
-        self.thread_id = thread.id
+        client.chat_ids |= set([chat.id])
+        self.chat_id = chat.id
 
         # Report
-        self.self._log_and_print(f"New thread created and added to current agent: {self.thread_id}\n", 
+        self._log_and_print(f"New chat created and added to current agent: {self.chat_id}\n", 
             self.verbose, self.logging)
 
     def _init_chat_completion(self, prompt, model, role='user'):
@@ -105,12 +104,12 @@ class ChatGPT(CreateAgent):
         self.tokens["prompt"] += response_obj.usage.prompt_tokens
         self.tokens["completion"] += response_obj.usage.completion_tokens
 
-    def thread_report(self):
-        """Report active threads from current session"""
-        threadStr = f"""Current session threads:
+    def chat_report(self):
+        """Report active chats from current session"""
+        chatStr = f"""Current session chats:
     {'\n\t'.join(client.chat_ids)}
 """
-        self.self._log_and_print(threadStr, True, self.logging)
+        self._log_and_print(chatStr, True, self.logging)
 
     def _create_new_agent(self, interpreter=False):
         """
@@ -133,7 +132,7 @@ class ChatGPT(CreateAgent):
             raise RuntimeError(f"Failed to create assistant: {e}")
 
     def _get_current_messages(self):
-        """Fetches all messages from a thread in order and returns them as a text block."""
+        """Fetches all messages from a chat in order and returns them as a text block."""
         messages = client.beta.threads.messages.list(chat_id=self.chat_id)
         sorted_messages = sorted(messages.data, key=lambda msg: msg.created_at)
         conversation = [x.content[0].text.value.strip() for x in sorted_messages]
@@ -142,7 +141,7 @@ class ChatGPT(CreateAgent):
 
     def _send_chat_message(self) -> str:
         """
-        Sends a user prompt to an existing thread, runs the assistant, 
+        Sends a user prompt to an existing chat, runs the assistant, 
         and retrieves the response if successful.
         
         Returns:
@@ -151,32 +150,32 @@ class ChatGPT(CreateAgent):
         Raises:
             ValueError: If the assistant fails to generate a response.
         """
-        # Adds user prompt to existing thread.
+        # Adds user prompt to existing chat.
         try:
             new_message = client.beta.threads.messages.create(
-                thread_id=self.thread_id, role="user", content=self.prompt)
+                chat_id=self.chat_id, role="user", content=self.prompt)
         except Exception as e:
             raise RuntimeError(f"Failed to create message: {e}")
 
-        # Run the assistant on the thread
+        # Run the assistant on the chat
         current_run = client.beta.threads.runs.create(
-            thread_id=self.thread_id,
+            chat_id=self.chat_id,
             assistant_id=self.agent)
 
         # Wait for completion and retrieve responses
         while True:
-            self.run_status = client.beta.threads.runs.retrieve(thread_id=self.thread_id, run_id=current_run.id)
+            self.run_status = client.beta.threads.runs.retrieve(chat_id=self.chat_id, run_id=current_run.id)
             if self.run_status.status in ["completed", "failed"]:
                 break
             else:
                 time.sleep(1)  # Wait before polling again
 
         if self.run_status.status == "completed":
-            messages = client.beta.threads.messages.list(thread_id=self.thread_id)
+            messages = client.beta.threads.messages.list(chat_id=self.chat_id)
             if messages.data:  # Check if messages list is not empty
                 return messages.data[0].content[0].text.value
             else:
-                raise ValueError("No messages found in the thread.")
+                raise ValueError("No messages found in the chat.")
         else:
             raise ValueError("Assistant failed to generate a response.")
 
