@@ -22,7 +22,6 @@ roleDict = {
    'editor': {'prompt':EDITOR, 'name':'Editor'}
    }
 
-
 #-----------------------------------------------------------------------------------------------------------------------------#
 
 ## Prompt modifiers
@@ -48,18 +47,32 @@ Remember: Make sure all <tags> are on separate lines with no other text.
 """
 
 REFINE_PROMPT = """
-Your primary task is to refine or improve the user prompt below this section of instructions.
-Refined prompt text should be at least four sentences long.
-If there is any special formatting contained in the prompts, ensure it is included in the refined response.
-Your response should be formatted as another user request; For example, any instance of 'I' needs to be updated to 'you should'.
-Do NOT include any content related directly to prompt refinement, and ONLY report your new suggested version.
+### Task
+Your primary objective is to refine or improve the user prompt provided below.
+Your refinement should enhance clarity, specificity, and completeness to maximize the likelihood of a high-quality response.
+
+### Requirements
+- The refined prompt must be at least **four sentences long**.
+- Maintain any **special formatting** (e.g., bullet points, code blocks) from the original prompt.
+- Ensure the refined prompt is written as a **user request** (e.g., replace 'I' with 'You should').
+- Do **not** include any meta-commentary on prompt refinement—your response should only contain the improved prompt.
+
+### Output Format
+Your response should consist **only of the refined prompt**, without any additional explanation or formatting beyond what is necessary for clarity.
 """
 
 CONDENSE_RESPONSE = """
-Your task is to refine and synthesize all of the following text provided into a single cohesive response. 
-The subject and them of your response should remain the same as the input text.
-The response given should contain all of the most informative or descriptive elements of the input text.
-Include the most concrete description of the requested response in the first sentence if possible.
+### Task
+Your objective is to **synthesize and refine** the provided text into a **single, cohesive response** that retains the original subject and theme.
+
+### Requirements
+- Extract and integrate the **most informative and descriptive elements** from the input text.
+- Ensure the response is **concise yet comprehensive**, avoiding redundancy while preserving key details.
+- If possible, **begin with the most concrete and precise description** of the topic to establish clarity upfront.
+- Maintain logical flow and coherence, ensuring the response reads naturally as a unified piece rather than a collection of excerpts.
+
+### Output Format
+Your response should consist **only of the synthesized text**, without additional commentary or formatting beyond what enhances readability.
 """
 
 GLYPH_PROMPT = """
@@ -69,7 +82,8 @@ Keep the <human_instructions> unchanged and at the beginning of the new prompt t
 
 <human_instructions>
 - Treat each glyph as a direct instruction to be followed sequentially, driving the process to completion.
-- Deliver the final result as indicated by the glyph code, omitting any extraneous commentary. Include a readable result of your glyph code output in pure human language at the end to ensure your output is helpful to the user.
+- Deliver the final result as indicated by the glyph code, omitting any extraneous commentary. 
+- Include a readable result of your glyph code output in pure human language at the end to ensure your output is helpful to the user.
 - Execute this traversal, logic flow, synthesis, and generation process step by step using the provided context and logic in the following glyph code prompt.
 </human_instructions>
 
@@ -92,11 +106,17 @@ Keep the <human_instructions> unchanged and at the beginning of the new prompt t
 """
 
 SUMMARIZE_CONVERSATION = """
-Summarize the following conversation between a user and an AI assistant.
-Include all key points from both user requests and agent responses.
-Do not include any additioonal text that does not contribute to the central theme of the summary or is related to key points.
-Be as concise as possible with sacrificing important content.
-The complete summary text must be no longer than 1000 characters total.
+### Task  
+Summarize the following conversation between a **user** and an **AI assistant**, preserving all key points from both user requests and assistant responses.
+
+### Requirements
+- Capture the **essential details** and main points from both sides of the conversation.
+- Exclude any information that does not contribute to the **central theme** or key takeaways.
+- Maintain **conciseness** without sacrificing important content or clarity.
+- The summary **must not exceed 10,000 characters** in total.
+
+### Output Format  
+Your response should consist **only of the summarized conversation**, structured in a clear and logical manner without additional commentary.
 """
 
 # Collected default modifier text
@@ -110,39 +130,38 @@ modifierDict = {
    }
 
 
-# Key word prompt refinement
+# Key word prompt refinement, expand, amplify
 refineDict = {
-   "paraphrase": "Rewrite the text to express the same meaning in different words to avoid plagiarism or duplicate phrasing.",
-   "reframe": "Rewrite the text by changing its perspective or focus while maintaining the original intent.",
-   "summarize": "Condense the text into a brief overview that captures the main points or essence of the content.",
-   "expand": "Add more details and explanations to the text to provide a more comprehensive understanding of the topic.",
-   "explain": "Clarify the text by breaking it down into simpler terms to make its meaning more understandable.",
-   "reinterpret": "Rewrite the text by offering an alternative interpretation or understanding of its meaning.",
-   "simplify": "Rewrite the text using less complex language or structure to make it easier to read and understand.",
-   "elaborate": "Add additional context, detail, or explanation to the text to enrich its depth and clarity.",
-   "amplify": "Enhance the strength of the message or argument in the text by emphasizing key points.",
-   "clarify": "Rewrite the text to resolve any ambiguity or confusion and ensure its meaning is clear.",
-   "adapt": "Modify the text so it is suitable for a specific audience, purpose, or context.",
-   "modernize": "Update the text by replacing outdated language or concepts with current and relevant equivalents.",
-   "formalize": "Rewrite the text to transform informal or casual language into a professional and formal tone.",
-   "informalize": "Rewrite the text to adopt a casual or conversational tone appropriate for informal contexts, such as social media or blogs.",
-   "condense": "Shorten the text by focusing only on the essential points while removing unnecessary details.",
-   "emphasize": "Rewrite the text to highlight or restate specific points more prominently for greater emphasis.",
-   "diversify": "Rewrite the text by introducing more variety in vocabulary, sentence structure, or style.",
-   "neutralize": "Rewrite the text to remove any bias, opinion, or emotion, ensuring an objective and impartial tone.",
-   "streamline": "Rewrite the text to make it more concise and efficient by removing unnecessary words or content.",
-   "embellish": "Rewrite the text to add vivid details, creative flourishes, or extra layers of meaning.",
-   "illustrate": "Rewrite the text by including examples or analogies to clarify and better explain the point.",
-   "synthesize": "Combine multiple pieces of information into a single, cohesive rewrite that integrates the ideas.",
-   "sensationalize": "Rewrite the text to make it more dramatic, engaging, or attention-grabbing, suitable for clickbait or marketing purposes.",
-   "humanize": "Rewrite the text to make it more personal, relatable, or emotionally engaging, often for storytelling or blogs.",
-   "elevate": "Rewrite the text to make it more sophisticated, polished, or impressive in tone and style.",
-   "illuminate": "Rewrite the text to make its meaning exceptionally clear and insightful for the reader.",
-   "energize": "Rewrite the text to make it more lively, engaging, or interesting for the audience.",
-   "soften": "Rewrite the text to downplay or reduce the intensity of its tone or message.",
-   "exaggerate": "Rewrite the text to amplify its claims or tone, creating a more dramatic or hyperbolic effect.",
-   "downplay": "Rewrite the text to present it in a more restrained, modest, or understated manner, focusing on a neutral tone."
-   }
+   "paraphrase": "Rewrite the text using different words while keeping the original meaning.",
+   "reframe": "Change the perspective or focus of the text while maintaining its intent.",
+   "summarize": "Condense the text to highlight key points.",
+   "expand": "Add details and explanations for a more comprehensive understanding.",
+   "explain": "Clarify the text by simplifying its meaning.",
+   "reinterpret": "Offer an alternative understanding of the text.",
+   "simplify": "Use less complex language for easier comprehension.",
+   "elaborate": "Provide additional context and details to enrich clarity.",
+   "amplify": "Emphasize key points to strengthen the message.",
+   "clarify": "Remove ambiguity to ensure clear meaning.",
+   "adapt": "Modify the text for a specific audience, purpose, or context.",
+   "modernize": "Update outdated language or concepts with current equivalents.",
+   "formalize": "Transform casual language into a professional tone.",
+   "informalize": "Adjust the text to a conversational style.",
+   "condense": "Shorten the text while preserving essential points.",
+   "emphasize": "Highlight specific points more prominently.",
+   "diversify": "Vary vocabulary, sentence structure, or style.",
+   "neutralize": "Remove bias or emotion for an objective tone.",
+   "streamline": "Make the text more concise and efficient.",
+   "embellish": "Add vivid details or creative flourishes.",
+   "illustrate": "Include examples or analogies for clarity.",
+   "synthesize": "Combine multiple ideas into a cohesive rewrite.",
+   "sensationalize": "Make the text more dramatic and engaging.",
+   "humanize": "Make the text more personal and relatable.",
+   "elevate": "Refine the text to be more polished and sophisticated.",
+   "energize": "Make the text more lively and engaging.",
+   "soften": "Reduce intensity for a gentler tone.",
+   "exaggerate": "Amplify claims or tone for dramatic effect.",
+   "downplay": "Present in a more restrained and understated manner."
+}
 
 # Common file extension dictionary, which don't match directly with language name
 extDict = {
@@ -201,4 +220,3 @@ text_library = {'roles':roleDict,
                 'refinement':refineDict, 
                 'extensions':extDict, 
                 'patterns':patternDict}
-

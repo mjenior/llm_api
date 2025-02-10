@@ -70,7 +70,7 @@ def find_max_lines(code, object_names):
     Returns:
         str: Name of object with the largest line count.
     """
-    rm_names = ["main", "functions", "classes", "variables", "processes", "workflows"]
+    rm_names = ["main", "functions", "classes", "variables"]
     line_counts = {name: 0 for name in object_names if name not in rm_names}
     line_counts['code'] = 1
     current_object = None
