@@ -15,7 +15,7 @@ client.chat_ids = set([chat.id])
 
 
 # Google sub-class
-class Gemini(CreateAgent):
+class GeminiAgent(CreateAgent):
 
     def __init__(
         self,

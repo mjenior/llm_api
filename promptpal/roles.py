@@ -314,7 +314,7 @@ Refactoring Constraints:
 
 Boundaries:
 1. Only add new features or dependencies which significantly improve performance or brevity
-2. Do not exclude ANY code for brevity
+2. Do not exclude ANY code for brevity. If any code would be excluded for this reason, create an additional response containing the remaining refactored code.
 3. Balance readability with performance
 4. Implement type hints where applicable
 5. Follow language-specific best practices

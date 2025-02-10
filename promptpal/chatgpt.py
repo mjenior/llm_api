@@ -14,7 +14,7 @@ client.chat_ids = set([chat.id])
 
 
 # OpenAI sub-class
-class ChatGPT(CreateAgent):
+class ChatGPTAgent(CreateAgent):
     """
     A handler for managing queries to the OpenAI API, including prompt preparation,
     API request submission, response processing, and logging.

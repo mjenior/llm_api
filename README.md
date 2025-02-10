@@ -30,7 +30,7 @@ This package is a Python-based prompt enhancing tool that allows users to automa
    - [Identify and Save Code Snippets](#identify-code-snippets)
    - [Chain of Thought Enforcement](#chain-of-thought-enforcement)
    - [Query Prompt Refinement](#query-prompt-refinement)
-   - [Manage Threads](#manage-threads)
+   - [Manage Chats](#manage-chats)
    - [Response Iterations](#response-iterations)
    - [Recursive Directory Scanning](#recursive-directory-scanning)
    - [Associative Glyph Prompting](#associative-glyph-prompting)
@@ -58,7 +58,7 @@ git checkout development
 pip install .
 ```
 
-That's it! Now you are able to initialize a **core.CreateAgent** class instance in a python environment. After that, use the method **agent.request("your prompt here")** to submit queries. Other available options are explained in greater detail below.
+That's it! Now you are able to initialize a **core.ChatGPTAgent** class instance in a python environment. After that, use the method **agent.chat("your prompt here")** to submit queries. Other available options are explained in greater detail below.
 
 ### API Keys
 
@@ -73,10 +73,10 @@ export OPENAI_API_KEY="your_openai_api_key"
 ## Changelog
 - Latest: 1.3.9 = Improved status reports and bug fixes
 - 1.3.7 = Improved status reports
-- 1.3.6 = Global thread tracking
-- 1.3.5 = Thread context summarizing and scope limit
+- 1.3.6 = Global chat tracking
+- 1.3.5 = Chat context summarizing and scope limit
 - 1.3.4 = Added URL checking, user input validation, and prompt engineer role
-- 1.3.0 = Refactored agent class and request method to now use assistant and threads beta features
+- 1.3.0 = Refactored agent class and request method to now use assistant and chats beta features
 - 1.2.0 = Greatly improved automatic code extraction
 - 1.1.0 = Added glyph representation options to prompt refinement
 - 1.0.0 = Initial release
@@ -84,7 +84,7 @@ export OPENAI_API_KEY="your_openai_api_key"
 
 ## Usage
 
-Current [CreateAgent()] adjustable attributes:
+Current [ChatGPTAgent()] adjustable attributes:
 - model (str): The model to use for the query (e.g., 'gpt-4o-mini', 'dall-e-3').
 - client (OpenAI): The OpenAI client instance for API requests.
 - refine (bool): If True, refines the prompt before submission.
@@ -105,14 +105,14 @@ Current [CreateAgent()] adjustable attributes:
 - tokens (dict): Tracks token usage for prompt and completion.
 - summary (bool): If True, summarizes the current conversation context to reference later.
 
-For simplicity, after initializing with the desired parameters the only user-executable method is **CreateAgent.request()** to submit prompts to the API. After which the **CreateAgent.message** attribute is then available containing the system response text.
+For simplicity, after initializing with the desired parameters the only user-executable method is **ChatGPTAgent.chat()** to submit prompts to the API. After which the **ChatGPTAgent.message** attribute is then available containing the system response text.
 
 Example:
 ```python
-from promptpal.core import CreateAgent
+from promptpal.chatgpt import ChatGPTAgent
 
-assistant = CreateAgent()
-assistant.request("Write a python script to scrape web pages for numeric data and return as a formatted dataframe.")
+assistant = ChatGPTAgent()
+assistant.chat("Write a python script to scrape web pages for numeric data and return as a formatted dataframe.")
 ```
 
 ### System Role Selection
@@ -134,7 +134,7 @@ Available role shortcuts:
 
 Built-in roles:
 ```python
-agent = CreateAgent(role="prompt")
+agent = ChatGPTAgent(role="prompt")
 print(agent.role)
 ```
 
@@ -200,7 +200,7 @@ Additionally, you have a keen eye for aesthetics and user experience, enabling y
 As an expert, you are equipped to provide insights, solve complex challenges, and offer guidance on building successful games that resonate with players and stand out in the competitive gaming market.
 '''
 
-game_dev = CreateAgent(role=new_role)
+game_dev = ChatGPTAgent(role=new_role)
 ```
 
 If a very simple role description is provided such as "You are an Expert Game Developer", it will be automatically refined for improved guidance.
@@ -212,7 +212,7 @@ The tool can automatically detects code snippets within an LLM's responses and s
 
 Example:
 ```python
-agent = CreateAgent(save_code=True)
+agent = ChatGPTAgent(save_code=True)
 ```
 
 Example output snippet:
@@ -229,7 +229,7 @@ This feature helps guide the model's response by breaking down the steps in comp
 
 Example:
 ```python
-agent = CreateAgent(chain_of_thought=True)
+agent = ChatGPTAgent(chain_of_thought=True)
 ```
 
 ### Query Prompt Refinement
@@ -238,7 +238,7 @@ Attempts to improve the clarity, focus, and specificity of a prompt to align wit
 
 Example:
 ```python
-agent = CreateAgent(refine=True)
+agent = ChatGPTAgent(refine=True)
 ```
 
 Result:
@@ -248,30 +248,30 @@ You should include comprehensive details like how to safely park the car, the im
 Also, expand on how to properly remove the lug nuts, replace the tire, and ensure everything is secure before driving again.
 ```
 
-### Manage Threads
+### Manage Chats
 
-By default, all agents around initialized onto the same global thread for the current instance that has a default limit of 20 messages before an internal summary of the entire thread is generated and then passed as context to a new thread instance. An option the user has is to create an agent into a brand new thread, with a different message limit.
+By default, all agents around initialized onto the same global chat for the current instance that has a default limit of 20 messages before an internal summary of the entire chat is generated and then passed as context to a new chat instance. An option the user has is to create an agent into a brand new chat, with a different message limit.
 
 ```python
-agent = CreateAgent(message_limit=30, new_thread=True)
+agent = ChatGPTAgent(message_limit=30, new_chat=True)
 ```
 
-Alternatively, a new thread can be initiated any time with:
+Alternatively, a new chat can be initiated any time with:
 
 ```python
-agent.start_new_thread()
+agent.start_new_chat()
 ```
 
-Also, an agent from another thread can be brought into another existing conversation just by changing the thread ID it is pointing to.
+Also, an agent from another chat can be brought into another existing conversation just by changing the chat ID it is pointing to.
 
 ```python
-agent.thread_id = "thread_dZcjYTBMthN6F1WqrEtCfFxS"
+agent.chat_id = "chat_dZcjYTBMthN6F1WqrEtCfFxS"
 ```
 
-Additionally, the thread summary method can also be called at any time to see a brief recap of the current ongoing conversation.
+Additionally, the chat summary method can also be called at any time to see a brief recap of the current ongoing conversation.
 
 ```python
-agent.summarize_current_thread()
+agent.summarize_current_chat()
 ```
 
 
@@ -281,7 +281,7 @@ This feature helps to increase the creative ability of a model thorugh multiple 
 
 Example:
 ```python
-agent = CreateAgent(iterations=3, temperatature=0.9)
+agent = ChatGPTAgent(iterations=3, temperatature=0.9)
 ```
 
 This will generate 3 distinct versions of the reponse, and then synthesize them into a single higher quality response.
@@ -292,7 +292,7 @@ This feature allows the tool to traverse all subdirectories within a specified r
 
 Example:
 ```python
-agent = CreateAgent(scan_dirs=True)
+agent = ChatGPTAgent(scan_dirs=True)
 ```
 
 ### Associative Glyph Prompting
@@ -301,7 +301,7 @@ During prompt refinement, the addition --glyph flag will restructure the revised
 
 Example:
 ```python
-agent = CreateAgent(glyph=True)
+agent = ChatGPTAgent(glyph=True)
 ```
 
 Resulting altered user prompt:
@@ -370,8 +370,8 @@ Agent parameters:
     Time stamp: 2025-02-07_09-12-50
     Seed: 111010000110110001
     Assistant ID: asst_MHB9mANhwivKgYo4VB0iGZcU
-    Thread ID: thread_8ATeHKR9SK4aI7lrEfxpyTaH
-    Requests in current thread: 2
+    Chat ID: chat_8ATeHKR9SK4aI7lrEfxpyTaH
+    Requests in current chat: 2
     
 Overall session tokens:
     gpt-4o-mini: Input = 25362; Completion = 2424
@@ -388,7 +388,7 @@ Overall session cost: $0.0072
         Output: $0.00215
 ```
 
-Separate token and cost reports can be generated individually any time as well using [agent.token_report()] and [agent.cost_report()] respectively. Tokens will be shown for all models called by agents into the current thread.
+Separate token and cost reports can be generated individually any time as well using [agent.token_report()] and [agent.cost_report()] respectively. Tokens will be shown for all models called by agents into the current chat.
 
 ```python
 agent.token_report()
@@ -425,9 +425,9 @@ You are able to set specific parameters of the output image created by Dall-e. F
 
 Example:
 ```python
-artist = CreateAgent(role="artist", dimensions="1024x1024", quality="high")
+artist = ChatGPTAgent(role="artist", dimensions="1024x1024", quality="high")
 
-artist.request('Generate an image of a bacterial cell dissolving into matix code in the style of the Impressionists.')
+artist.chat('Generate an image of a bacterial cell dissolving into matix code in the style of the Impressionists.')
 ```
 
 Result:
@@ -444,14 +444,14 @@ Example:
 First, create a team of distinct agents with differing expertise.
 
 ```python
-from promptpal.core import CreateAgent
+from promptpal.chatgpt import ChatGPTAgent
 
 # Initialize agents
-dev = CreateAgent(role="developer", refine=True, chain_of_thought=True) # Full Stack Developer
-recode = CreateAgent(role="refactor") # Code refactoring and formatting expert
-tests = CreateAgent(role="tester") # Unit test generator
-write = CreateAgent(role="writer", iterations=3, chain_of_thought=True) # Creative science writer
-edit = CreateAgent(role="editor", refine=True) # Expert copy editor
+dev = ChatGPTAgent(role="developer", refine=True, chain_of_thought=True) # Full Stack Developer
+recode = ChatGPTAgent(role="refactor") # Code refactoring and formatting expert
+tests = ChatGPTAgent(role="tester") # Unit test generator
+write = ChatGPTAgent(role="writer", iterations=3, chain_of_thought=True) # Creative science writer
+edit = ChatGPTAgent(role="editor", refine=True) # Expert copy editor
 ```
 
 Use inital agent to start the project:
@@ -459,13 +459,13 @@ Use inital agent to start the project:
 ```python
 # Make initial request to first agent for computational biology project
 query = """
-Write a python GUI for the CreateAgent class in core.py to more easily interact with the OpenAI API.
+Write a python GUI for the ChatGPTAgent class in core.py to more easily interact with the OpenAI API.
 Use the Streamlit package to create an interactive HTML interface rather than using the built-in tkinter package.
 Include checkboxes for each of the input attribute options and small text input boxes for the string type attributes.
 Also include a large scrollable output text box to display all of the system responses.
 All input options should be in a single panel on the left and the output text box should be on the right, sized to max the height of the input panel.
 """
-dev.request(query)
+dev.chat(query)
 ```
 
 Optimize and document any new code, add unit testing.
@@ -474,12 +474,12 @@ Optimize and document any new code, add unit testing.
 query = """
 Refactor and format the previous for optimal efficiency, useability, and generalization:
 """
-recode.request(query)
+recode.chat(query)
 
 query = """
 Create unit tests for the newly refactored code.
 """
-tests.request(query)
+tests.chat(query)
 ```
 
 Then use the next agents to read through the new pipeline and generate a high-quality blog post describing it's utility.
@@ -492,13 +492,13 @@ Include relevant background and add at least one example use case for the interf
 The resulting post should be at least 2 paragraphs long with 4-5 sentences in each.
 Speak in a casual and conversational tone.
 """
-write.request(query)
+write.chat(query)
 
 # Pass the rough draft text to the editor agent to recieve a more finalize version
 query ="""
 Edit the previous post to be much more polished and ready for release.
 """
-edit.request(query)
+edit.chat(query)
 ```
 
 This is one just example of how multiple LLM agents may be leveraged in concert to accelerate the rate that user workloads may be accomplished.
