@@ -1,0 +1,15 @@
+LICENSE.txt
+README.md
+pyproject.toml
+promptpal/__init.__.py
+promptpal/chatgpt.py
+promptpal/core.py
+promptpal/gemini.py
+promptpal/lib.py
+promptpal/roles.py
+promptpal/utils.py
+promptpal.egg-info/PKG-INFO
+promptpal.egg-info/SOURCES.txt
+promptpal.egg-info/dependency_links.txt
+promptpal.egg-info/requires.txt
+promptpal.egg-info/top_level.txt

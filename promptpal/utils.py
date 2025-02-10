@@ -3,6 +3,7 @@ import re
 import sys
 
 from promptpal.lib import text_library
+
 patternDict = text_library["patterns"]
 
 
@@ -14,19 +15,22 @@ def setup_logging(prefix):
     os.makedirs("logs", exist_ok=True)
     with open(log_file, "w") as f:
         f.write("New session initiated.\n")
-        
+
     return log_file
+
 
 def string_to_binary(input_string):
     """Create a binary-like variable from a string for use a random seed"""
     # Convert all characters in a str to ASCII values and then to 8-bit binary
-    binary = ''.join([format(ord(char), "08b") for char in input_string])
+    binary = "".join([format(ord(char), "08b") for char in input_string])
 
-    return int(binary[0 : len(str(sys.maxsize))]) # Constrain length
+    return int(binary[0 : len(str(sys.maxsize))])  # Constrain length
+
 
 def _is_code_file(file_path):
     """Check if a file has a code extension."""
     return os.path.splitext(file_path)[1].lower() in set(extDict.values())
+
 
 def check_unique_filename(filename):
     # Split the filename into name and extension
@@ -36,8 +40,9 @@ def check_unique_filename(filename):
     while os.path.exists(filename):
         filename = f"{name}_{counter}{ext}"
         counter += 1
-    
+
     return filename
+
 
 def extract_object_names(code, language):
     """
@@ -59,6 +64,7 @@ def extract_object_names(code, language):
     else:
         return variables
 
+
 def find_max_lines(code, object_names):
     """
     Count the number of lines of code for each object in the code snippet.
@@ -72,7 +78,7 @@ def find_max_lines(code, object_names):
     """
     rm_names = ["main", "functions", "classes", "variables"]
     line_counts = {name: 0 for name in object_names if name not in rm_names}
-    line_counts['code'] = 1
+    line_counts["code"] = 1
     current_object = None
 
     for line in code.split("\n"):
@@ -88,16 +94,19 @@ def find_max_lines(code, object_names):
 
     return max(line_counts, key=line_counts.get)
 
+
 def validate_probability_params(temp, topp):
     """Ensure temperature and top_p are valid"""
     temp = 0.7 if not (0.0 <= temp <= 2.0) else temp
     topp = 1.0 if not (0.0 <= topp <= 2.0) or temp != 0.7 else topp
     return temp, topp
 
+
 def read_file_contents(filename):
     """Reads the contents of a given file."""
     with open(filename, "r", encoding="utf-8") as f:
         return f"# File: {filename}\n{f.read()}"
+
 
 def scan_directory(path="code"):
     """Recursively scan a directory and return the content of all code files."""
@@ -110,6 +119,7 @@ def scan_directory(path="code"):
                 codebase += read_file_contents(file_path) + "\n\n"
 
     return codebase
+
 
 def find_existing_paths(prompt):
     """Scan the input string for existing paths and return them in separate lists."""
@@ -127,10 +137,14 @@ def find_existing_paths(prompt):
 
     return existing_paths
 
+
 def find_existing_files(prompt):
     """Filter filenames by checking if they exist in the current directory or system's PATH"""
-    existing_files = [x for x in prompt.split() if os.path.isfile(x.rstrip(string.punctuation))]
+    existing_files = [
+        x for x in prompt.split() if os.path.isfile(x.rstrip(string.punctuation))
+    ]
     return existing_files
+
 
 def extract_code_snippets(message):
     """Extract code snippets from a large body of text using triple backticks as delimiters."""

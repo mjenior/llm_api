@@ -64,7 +64,7 @@ class CreateAgent:
     Methods:
         __init__: Initializes the handler with default or provided values.
         chat: Submits a query to the API and processes the response.
-        status: Reports current attributes and status of agent and session information 
+        status: Reports current attributes and status of agent and session information
         cost_report: Reports spending information
         token_report: Reports token generation information
         chat_report: Report active chats from current session
@@ -84,25 +84,26 @@ class CreateAgent:
 
     def __init__(
         self,
-        logging = True,
-        verbose = True,
-        silent = False,
-        refine = False,
-        glyph = False,
-        chain_of_thought = False,
-        save_code = False,
-        scan_dirs = False,
-        new_chat = False,
-        role = "assistant",
-        seed = "t634e``R75T86979UYIUHGVCXZ",
-        iterations = 1,
-        temperature = 0.7,
-        top_p = 1.0,
-        dimensions = "NA",
-        quality = "NA",
-        stage = 'normal',
-        message_limit = 20,
-        **kwargs):
+        logging=True,
+        verbose=True,
+        silent=False,
+        refine=False,
+        glyph=False,
+        chain_of_thought=False,
+        save_code=False,
+        scan_dirs=False,
+        new_chat=False,
+        role="assistant",
+        seed="t634e``R75T86979UYIUHGVCXZ",
+        iterations=1,
+        temperature=0.7,
+        top_p=1.0,
+        dimensions="NA",
+        quality="NA",
+        stage="normal",
+        message_limit=20,
+        **kwargs,
+    ):
         """
         Initialize the handler with default or provided values.
         """
@@ -141,13 +142,19 @@ class CreateAgent:
         self.tokens = {"prompt": 0, "completion": 0}
         if self.model not in total_tokens.keys():
             total_tokens[self.model] = {"prompt": 0, "completion": 0}
-        
+
         # Validate specific hyperparams
         self._validate_model_selection(self.model, kwargs["valid_models"])
-        self.stage = self.stage if self.stage == 'refine_only' else 'normal'
-        self.seed = self.seed if isinstance(self.seed, int) else utils.string_to_binary(self.seed)
-        self.temperature, self.top_p = utils.validate_probability_params(self.temperature, self.top_p)
-        
+        self.stage = self.stage if self.stage == "refine_only" else "normal"
+        self.seed = (
+            self.seed
+            if isinstance(self.seed, int)
+            else utils.string_to_binary(self.seed)
+        )
+        self.temperature, self.top_p = utils.validate_probability_params(
+            self.temperature, self.top_p
+        )
+
         # Validate user inputs
         self._prepare_system_role(role)
         if self.model in ["dall-e-2", "dall-e-3"]:
@@ -156,8 +163,8 @@ class CreateAgent:
 
         # Initialize reporting and related vars
         self.timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.prefix = f"{self.label}.{self.model.replace('-', '_')}.{self.timestamp}"        
-        if self.logging: 
+        self.prefix = f"{self.label}.{self.model.replace('-', '_')}.{self.timestamp}"
+        if self.logging:
             self.log_file = utils.setup_logging(self.prefix)
         self._log_and_print(self.status(), False, self.logging)
 
@@ -170,38 +177,43 @@ class CreateAgent:
             ValueError: If any integer attribute is not positive.
         """
         expected_types = {
-            'model': str,
-            'logging': bool,
-            'verbose': bool,
-            'silent': bool,
-            'refine_prompt': bool,
-            'glyph_prompt': bool,
-            'chain_of_thought': bool,
-            'save_code': bool,
-            'scan_dirs': bool,
-            'new_chat': bool,
-            'model': str,
-            'role': str,
-            'seed': (int, str),  # seed can be either int or str
-            'iterations': int,
-            'temperature': float,
-            'top_p': float,
-            'dimensions': str,
-            'quality': str,
-            'stage': str,
-            'message_limit': int}
+            "model": str,
+            "logging": bool,
+            "verbose": bool,
+            "silent": bool,
+            "refine_prompt": bool,
+            "glyph_prompt": bool,
+            "chain_of_thought": bool,
+            "save_code": bool,
+            "scan_dirs": bool,
+            "new_chat": bool,
+            "model": str,
+            "role": str,
+            "seed": (int, str),  # seed can be either int or str
+            "iterations": int,
+            "temperature": float,
+            "top_p": float,
+            "dimensions": str,
+            "quality": str,
+            "stage": str,
+            "message_limit": int,
+        }
 
         for attr_name, expected_type in expected_types.items():
             value = getattr(self, attr_name, None)  # Get the attribute value from self
             if isinstance(expected_type, tuple):
                 # Check if value matches any expected type in the tuple
                 if not isinstance(value, expected_type):
-                    raise TypeError(f"Expected type for {attr_name} is {expected_type}, got {type(value).__name__}")
+                    raise TypeError(
+                        f"Expected type for {attr_name} is {expected_type}, got {type(value).__name__}"
+                    )
             else:
                 # Check if value matches the expected type
                 if not isinstance(value, expected_type):
-                    raise TypeError(f"Expected type for {attr_name} is {expected_type}, got {type(value).__name__}")
-            
+                    raise TypeError(
+                        f"Expected type for {attr_name} is {expected_type}, got {type(value).__name__}"
+                    )
+
             # Check if integer-type values are positive
             if expected_type == int and value <= 0:
                 raise ValueError(f"{attr_name} must be a positive integer, got {value}")
@@ -227,7 +239,11 @@ class CreateAgent:
 
     def _validate_model_selection(self, input_model, valid_models):
         """Validates and selects the model based on user input or defaults."""
-        self.model = input_model.lower() if input_model.lower() in valid_models else valid_models[0]
+        self.model = (
+            input_model.lower()
+            if input_model.lower() in valid_models
+            else valid_models[0]
+        )
 
     def _prepare_system_role(self, input_role):
         """Prepares system role text."""
@@ -252,14 +268,21 @@ class CreateAgent:
 
     def _refine_custom_role(self, init_role):
         """Reformat input custom user roles for improved outcomes."""
-        self._log_and_print(f"Refining custom role text...\n", self.verbose, self.logging)
+        self._log_and_print(
+            f"Refining custom role text...\n", self.verbose, self.logging
+        )
 
         # Reformat role text
-        refine_prompt = "Format and improve the following system role propmt to maximize clarity and potential output quality:\n\n" + init_role
+        refine_prompt = (
+            "Format and improve the following system role propmt to maximize clarity and potential output quality:\n\n"
+            + init_role
+        )
         custom_role = self._init_chat_completion(refine_prompt)
-        
+
         # Name custom role
-        refine_prompt = "Generate a short and accurate name for the following system role prompt:\n\n" + custom_role "\n\nReturn only the generated name."
+        refine_prompt = "Generate a short and accurate name for the following system role prompt:\n\n"
+        refine_prompt += custom_role
+        refine_prompt += "\n\nReturn only the generated name."
         role_name = self._init_chat_completion(refine_prompt)
 
         reportStr = f"""Role name: {role_name}\n"""
@@ -303,20 +326,22 @@ Agent parameters:
         # Chat report
         self.chat_report()
 
-    def chat(self, prompt=''):
+    def chat(self, prompt=""):
         """Submits the query to OpenAIs API and processes the response."""
         # Checks for last system response is not prompt provided
-        if prompt == '':
+        if prompt == "":
             try:
                 prompt = self.last_message
             except Exception as e:
                 raise ValueError(f"No existing messages found in chat: {e}")
 
-        # Update user prompt 
+        # Update user prompt
         self._prepare_query_text(prompt)
         self._log_and_print(
             f"\n{self.role_name} using {self.model} to process continued conversation...\n",
-                True, self.logging)
+            True,
+            self.logging,
+        )
 
         if self.stage != "refine_only":
             if "dall-e" not in self.model:
@@ -327,9 +352,14 @@ Agent parameters:
 
         # Check current scope chat
         if chat.current_chat_messages >= chat.message_limit:
-            self._log_and_print(f"\nReached end of current chat limit.\n", self.verbose, False)
+            self._log_and_print(
+                f"\nReached end of current chat limit.\n", self.verbose, False
+            )
             summary = self.summarize_current_chat()
-            self.start_new_chat("The following is a summary of a ongoing conversation with a user and an AI assistant:\n" + summary)
+            self.start_new_chat(
+                "The following is a summary of a ongoing conversation with a user and an AI assistant:\n"
+                + summary
+            )
 
     def _log_and_print(self, message, verbose=True, logging=True):
         """Logs and prints the provided message if verbose."""
@@ -342,14 +372,23 @@ Agent parameters:
 
     def summarize_current_chat(self):
         """Summarize current conversation history for future context parsing."""
-        self._log_and_print(f"Using {self.small_model} to summarize current chat...\n", self.verbose, False)
+        self._log_and_print(
+            f"Using {self.small_model} to summarize current chat...\n",
+            self.verbose,
+            False,
+        )
 
         # Get all chat messages
         all_messages = self._get_current_messages()
 
         # Generate concise summary
-        summary_prompt = text_library["modifiers"]['summarize'] + "\n\n" + all_messages
-        summarized = self._init_chat_completion(model=self.small_model, prompt=summary_prompt, iters=self.iterations, seed=self.seed)
+        summary_prompt = text_library["modifiers"]["summarize"] + "\n\n" + all_messages
+        summarized = self._init_chat_completion(
+            model=self.small_model,
+            prompt=summary_prompt,
+            iters=self.iterations,
+            seed=self.seed,
+        )
 
         return summarized
 
@@ -368,7 +407,9 @@ Agent parameters:
             for lang in code_snippets.keys():
                 code = code_snippets[lang]
                 objects = utils.extract_object_names(code, lang)
-                file_name = f"{utils.find_max_lines(code, objects)}.{self.timestamp}{text_library["extensions"].get(lang, f'.{lang}')}".lstrip("_.")
+                file_name = f"{utils.find_max_lines(code, objects)}.{self.timestamp}{text_library["extensions"].get(lang, f'.{lang}')}".lstrip(
+                    "_."
+                )
                 file_name = _check_unique_filename(file_name)
                 reportStr += f"\t{file_name}\n"
                 self._write_script(code, file_name)
@@ -391,7 +432,7 @@ Agent parameters:
         for x in total_tokens.keys():
             allTokensStr += f"{x}: Input = {total_tokens[x]['prompt']}; Completion = {total_tokens[x]['completion']}\n"
 
-        tokenStr = "Overall session tokens:\n\t" + allTokensStr 
+        tokenStr = "Overall session tokens:\n\t" + allTokensStr
         tokenStr += "\tCurrent agent tokens:\n"
         tokenStr += f"\tInput: {self.tokens['prompt']}\n"
         tokenStr += f"\tOutput: {self.tokens['completion']}\n"
@@ -400,7 +441,7 @@ Agent parameters:
 
     def chat_report(self):
         """Report active chats from current session"""
-        chatStr = "Current session chat IDs:\n" + '\n\t'.join(client.chat_ids)
+        chatStr = "Current session chat IDs:\n" + "\n\t".join(client.chat_ids)
         self._log_and_print(chatStr, True, self.logging)
 
     def _calculate_cost(self, rates, dec=5):
@@ -409,7 +450,9 @@ Agent parameters:
         if self.model in rates:
             prompt_rate, completion_rate = rates.get(self.model)
             prompt_cost = round((self.tokens["prompt"] * prompt_rate) / 1e6, dec)
-            completion_cost = round((self.tokens["completion"] * completion_rate) / 1e6, dec)
+            completion_cost = round(
+                (self.tokens["completion"] * completion_rate) / 1e6, dec
+            )
         else:
             prompt_cost = completion_cost = 0.0
 
@@ -425,23 +468,31 @@ Agent parameters:
         Subtotal: ${round(self.cost['prompt'] + self.cost['completion'], dec)}
         Input: ${self.cost['prompt']}
         Output: ${self.cost['completion']}
-"""     
+"""
         self._log_and_print(costStr, True, self.logging)
 
     def _condense_iterations(self, responses):
         """Condenses multiple API responses into a single coherent response."""
-        responses =  "\n\n".join(
-            ["\n".join([f"Iteration: {i + 1}", responses[i]])
-            for i in range(len(responses))])
-
-        self._log_and_print(
-            f"Using {self.small_model} to condense system responses...\n", self.verbose, self.logging
+        responses = "\n\n".join(
+            [
+                "\n".join([f"Iteration: {i + 1}", responses[i]])
+                for i in range(len(responses))
+            ]
         )
-        condensed = self._init_chat_completion( 
-            model=self.small_model, prompt=text_library["modifiers"]['condense'] + "\n\n" + responses)
 
         self._log_and_print(
-            f"Condensed text:\n{condensed}\n", self.verbose, self.logging)
+            f"Using {self.small_model} to condense system responses...\n",
+            self.verbose,
+            self.logging,
+        )
+        condensed = self._init_chat_completion(
+            model=self.small_model,
+            prompt=text_library["modifiers"]["condense"] + "\n\n" + responses,
+        )
+
+        self._log_and_print(
+            f"Condensed text:\n{condensed}\n", self.verbose, self.logging
+        )
 
         return condensed
 
@@ -450,8 +501,10 @@ Agent parameters:
         modifierDict = text_library["modifiers"]
         refineDict = text_library["refinement"]
         self._log_and_print(
-                f"Using {self.small_model} to optimize initial user request...\n", 
-                True, self.logging)
+            f"Using {self.small_model} to optimize initial user request...\n",
+            True,
+            self.logging,
+        )
         updated_prompt = old_prompt
         if self.refine_prompt == True:
             actions = set(["expand", "amplify"])
@@ -467,11 +520,15 @@ Agent parameters:
             updated_prompt += modifierDict["glyph"]
 
         refined = self._init_chat_completion(
-            model=self.small_model, prompt=updated_prompt)
+            model=self.small_model, prompt=updated_prompt
+        )
 
-        new_prompt = self._condense_iterations(refined) if self.iterations > 1 else refined
+        new_prompt = (
+            self._condense_iterations(refined) if self.iterations > 1 else refined
+        )
 
         self._log_and_print(
-            f"Refined query prompt:\n{new_prompt}", self.verbose, self.logging)
+            f"Refined query prompt:\n{new_prompt}", self.verbose, self.logging
+        )
 
         return new_prompt
